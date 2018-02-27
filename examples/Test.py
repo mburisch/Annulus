@@ -155,8 +155,11 @@ def video():
         cv2.imshow("Image", image);
 
 
+output_path = "D:/temp/detect"
+os.chdir(output_path)
+#image = cv2.imread("images/grid_001.png")
 
-#single("image.png")
-video()
+single("image.png")
+#video()
 
 
