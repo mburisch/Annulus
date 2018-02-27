@@ -1,9 +1,9 @@
 
 import os
-import numpy
+import numpy as np
 import cv2
 
-from AnnulusDetector import *
+import annulus
 
 def imshow(image):
     cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
@@ -68,51 +68,33 @@ def threshold_image(image, block_size = (64, 64), step_size = (32, 32)):
     return binary
 
 
-def detect_annuli(gray, binary):
-    detect = AnnulusDetection()
-    #detect.add_filter(annuli_shape_filter())
-    #detect.add_filter(cross_ratio_filter(inner_circle_diameter = 0.01, outer_circle_diameter = 0.02))
-    #detect.add_filter(neighbor_filter(outer_circle_diameter = 0.02, marker_spacing = 0.03))
-    annuli = detect.detect(gray,  binary, high_quality = False)
-
-    return annuli
-
-def detect_grid(ellipse):
-    grid = Grid(outer_circle_diamater = 0.02, marker_spacing = 0.03)
-    H = grid.find_grid(ellipse)
-    if H is None:
-        return None, None
-    grid = map_ellipse(H, ellipse)
-    return H, grid
-
-
 
 
 def process(image):
     image = image.copy()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.blur(gray, (5, 5))
-    #binary = threshold_image(gray, (64, 64))
-    binary = binarize(gray, 65)
+    #binary = annulus.threshold_image(gray, (64, 64))
+    binary = annulus.binarize(gray, 65)
 
-    detector = AnnulusDetection()
-    detector.add_filter(annuli_shape_filter())
-    detector.add_filter(cross_ratio_filter(inner_circle_diameter = 0.01, outer_circle_diameter = 0.02, tolerance = 0.2))
-    detector.add_filter(neighbor_filter(outer_circle_diameter = 0.02, marker_spacing = 0.03))
+    detector = annulus.AnnulusDetection()
+    detector.add_filter(annulus.annuli_shape_filter())
+    detector.add_filter(annulus.cross_ratio_filter(inner_circle_diameter = 0.01, outer_circle_diameter = 0.02, tolerance = 0.2))
+    detector.add_filter(annulus.neighbor_filter(outer_circle_diameter = 0.02, marker_spacing = 0.03))
     annuli = detector.detect(gray,  binary, high_quality = True)
     points = np.array([m[0] for m in annuli])
 
     draw_annuli(image, annuli)
 
-    grid = Grid(outer_circle_diamater = 0.02, marker_spacing = 0.03)
+    grid = annulus.Grid(outer_circle_diamater = 0.02, marker_spacing = 0.03)
     H, idx, grid, pixel = grid.find_grid(annuli)
     if H is not None:
         draw_grid(image, H, grid)
         
 
-        M = find_numbering(binary, H, grid)
+        M = annulus.find_numbering(binary, H, grid)
         if M is not None:
-            H, grid = transformed_homography(M, pixel, grid)
+            H, grid = annulus.transformed_homography(M, pixel, grid)
             color = (0, 255, 0)
         else:
             color = (0, 0, 255)
@@ -131,11 +113,9 @@ def single(image_file):
 
 
 def video():
-
     cam = cv2.VideoCapture(0)
     cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1270)
     cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
 
     cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
     while True:
@@ -155,11 +135,9 @@ def video():
         cv2.imshow("Image", image);
 
 
-output_path = "D:/temp/detect"
-os.chdir(output_path)
-#image = cv2.imread("images/grid_001.png")
+image_file = os.path.dirname(__file__) + "/../data/image.png"
 
-single("image.png")
+single(image_file)
 #video()
 
 
