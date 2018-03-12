@@ -4,15 +4,16 @@ import cv2
 
 
 def _cross_ratio(z1, z2, z3, z4):
-    """Calculate cross ratio"""
+    """Calculate cross ratio between four values on a line"""
     nom = (z3 - z1) * (z4 - z2)
     den = (z3 - z2) * (z4 - z1)
     return nom / den
 
 def _cross_ratio_annulus(center, circle1, circle2):
     """Return a cross ratio for a single annulus.
-      z1 z3   z4  z2
-      (  (  x  )  )
+
+    z1 z3   z4  z2
+    (  (  x  )  )
     """
     p1, p2 = _line_ellipse_intersection(center, [1, 0], circle1)
     p3, p4 = _line_ellipse_intersection(center, [1, 0], circle2)
@@ -31,13 +32,14 @@ def _cross_ratio_annulus(center, circle1, circle2):
 
 def _cross_ratio_neighbors(center1, center2, circle1, circle2):
     """Cross ratio between two ellipse: 
-        The following points are used (center is not used):
 
-        z1    z2    z4     z3
-        (  x  )     (  x   )
+    The following points are used (center is not used):
 
-        The lines are the intersection of the ellipse with a line
-        connecting both ellipse centers.
+    z1    z2    z4     z3
+    (  x  )     (  x   )
+
+    The lines are the intersection of the ellipse with a line
+    connecting both ellipse centers.
     """
     center1 = np.asarray(center1)
     center2 = np.asarray(center2)
@@ -102,12 +104,15 @@ def _line_ellipse_intersection(x0, xd, ellipse):
 
 
 def map_point(H, point):
+    """Performs a homogeneous mapping of a 2D point"""
+
     x = np.dot(H, np.hstack((point, 1)))
     x = x[0:2] / x[2]
     return x
 
 
 def map_points(H, pixel):
+    """Performs a homogeneous mapping of a list of 2D point"""
     pixel = np.column_stack((pixel, np.ones(len(pixel))))
     x = np.dot(H, pixel.T).T
     x = x[:,0:2] / x[:,2][:,np.newaxis]
@@ -115,17 +120,21 @@ def map_points(H, pixel):
 
         
 def map_ellipse(H, ellipse):
+    """Performs a homogeneous mapping of an ellipse center point"""
     points = np.array([e[0] for e in ellipse])
     return map_points(H, points)
 
 
-def binarize(image, block_size = 33):
-    return cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, block_size, 0)
+def annuli_shape_filter(axis_ratio = 0.2, max_angle = 10 * np.pi / 180, angle_ratio = 1.2):
+    """Filter based on the similiraity of the two ellipses of the annulus.
+        
+    Calculates the ratios betwen large and small ellipse axis and checks if they are similar.
+    Compare the angle angle (in rad) between their main axes.
 
-
-def annuli_shape_filter(ratio = 1.2, max_angle = 10 * np.pi / 180, angle_ratio = 1.2):
-    """Filter annuli based on the similarity of the two ellipses and the angle (in rad)
-       between their main axes.
+    Args:
+        axis_ratio:  Range of maximum allowed difference between axis ratios.
+        max_angle:   Angle (in rand) between the main axes.
+        angle_ratio: Minimum ratio of large to small ellipse axis to compare axis angles.
     """
     deg = np.pi / 180
 
@@ -136,7 +145,7 @@ def annuli_shape_filter(ratio = 1.2, max_angle = 10 * np.pi / 180, angle_ratio =
         axr2 = e2[1][1] / e2[1][0]
         ratio = axr1 / axr2
 
-        if ratio < 1 - ratio or ratio > 1 + ratio:
+        if ratio < 1 - axis_ratio or ratio > 1 + axis_ratio:
             return False
                 
         # Only compare axis if it is a strong ellipse, because otherwise the angle is dominated
@@ -153,7 +162,13 @@ def annuli_shape_filter(ratio = 1.2, max_angle = 10 * np.pi / 180, angle_ratio =
 
 
 def cross_ratio_filter(inner_circle_diameter, outer_circle_diameter, tolerance = 0.1):
-    """Filter annuli based on the cross ratio of the two circles."""
+    """Filter annuli based on the cross ratio of the two circles.
+        
+    Args:
+        inner_circle_diameter: Diameter of inner circle
+        outer_circle_diameter: Diameter of outer circle
+        tolerance:             Tolerance for cross ratio
+    """
     annulus_cr = _cross_ratio(-0.5 * outer_circle_diameter, -0.5 * inner_circle_diameter, 0.5 * inner_circle_diameter, 0.5 * outer_circle_diameter)
 
     def run(annulus):
@@ -165,8 +180,13 @@ def cross_ratio_filter(inner_circle_diameter, outer_circle_diameter, tolerance =
 
 
 def neighbor_filter(outer_circle_diameter, marker_spacing):
-    """Filter annuli based on the cross ratio between two annuli,
-       i.e. requires all annuli to have a direct neighbor.
+    """Filter annuli based on the cross ratio between two annuli
+   
+    Only allows annuli which have a direct neighbor.
+
+    Args:
+        outer_circle_diameter: Diameter of outer circle
+        marker_spacing:        Distance between two neighboring annuli
     """
     cr_grid = _cross_ratio(0, outer_circle_diameter, marker_spacing + outer_circle_diameter, marker_spacing)
 
@@ -188,13 +208,25 @@ def neighbor_filter(outer_circle_diameter, marker_spacing):
 
 
 class AnnulusDetection(object):
-    """Detect ring shaped object bounded by two concentric circles transformed by a homography (camera image)."""
+    """Detect annuli in images."""
     
     def __init__(self, **kwargs):
+        """Detect ring shaped object bounded by two concentric circles transformed by a homography (camera image)
+
+        All the parameters are optional
+
+        Args:
+            minimum_inner_circle_size: Minimum size in pixel of inner circle
+            minimum_outer_circle_size: Minimum size in pixel of outer circle
+            relative_outer_inner_size: Maximum difference in size between outer and inner circle
+            border_distance:           Minimum distance in pixel to image border
+            minimum_circle_points:     Minimum number of points for fitting circle
+        """
+
         self.minimum_inner_circle_size = kwargs.pop("minimum_inner_circle_size", 8)  # Minimum size in pixel of inner circle
         self.minimum_outer_circle_size = kwargs.pop("minimum_outer_circle_size", 16) # Minimum size in pixel of outer circle
         self.relative_outer_inner_size = kwargs.pop("relative_outer_inner_size", 4)  # Maximum difference in size between outer and inner circle
-        self.border_distance           = kwargs.pop("border_distance", 5)            # Minimum distance to image border of annulus. 
+        self.border_distance           = kwargs.pop("border_distance", 5)            # Minimum distance in pixel to image border 
 
         self.minimum_circle_points     = kwargs.pop("minimum_circle_points", 20)     # Minimum number of points for fitting circle
 
@@ -205,17 +237,26 @@ class AnnulusDetection(object):
 
 
     def add_filter(self, f):
+        """Add a filter to list."""
         self.filter.append(f)
 
     def _filter_annuli(self, annuli):
+        """Apply filters."""
         for f in self.filter:
             annuli = f(annuli)
         return annuli
 
 
     def detect(self, image, binary_image, high_quality = True):
-        """
-        high_quality --- True to detect the annuli using the gray image. Improves quality but more time consuming.
+        """Detect annuli in image."
+
+        Args:
+            image:        Gray image used for detection
+            binary_image: Binary image used for detection
+            high_quality: True to detect the annuli using the gray image. Improves quality but more time consuming.
+
+        Returns:
+            List of detected annuli
         """
         assert image.shape == binary_image.shape, "Binary image size does not correspond to gray image size"
         
@@ -223,18 +264,6 @@ class AnnulusDetection(object):
 
         stats_annulus, stats_background = self._label_image(binary_image, inv_binary_image)
         candidates = self._find_candidates(stats_annulus, stats_background, image.shape)
-
-        #im = image.copy()
-        #for c in candidates:
-        #    p1 = c[0][0:2]
-        #    p2 = p1 + c[0][2:4]
-        #    cv2.rectangle(im, tuple(p1), tuple(p2), (255, 0, 0))
-
-        #    p1 = c[1][0:2]
-        #    p2 = p1 + c[1][2:4]
-        #    cv2.rectangle(im, tuple(p1), tuple(p2), (255, 0, 0))
-
-        #imshow(im)
 
         annuli, rect = self._approx_annuli(inv_binary_image, candidates)
         annuli = self._filter_annuli(annuli)
@@ -248,6 +277,7 @@ class AnnulusDetection(object):
     
 
     def _label_image(self, binary_image, inv_binary_image):
+        """Detects connected components for foreground and background in binary image."""
         _, label_background, stats_background, _ = cv2.connectedComponentsWithStats(binary_image)
         _, label_annulus,    stats_annulus,    _ = cv2.connectedComponentsWithStats(inv_binary_image)
 
@@ -297,6 +327,7 @@ class AnnulusDetection(object):
 
 
     def _approx_annuli(self, inv_binary_image, candidates):
+        """Fits annuli from binary image."""
         annuli = []
         rect = []
         for annulus, background in candidates:
@@ -318,6 +349,7 @@ class AnnulusDetection(object):
 
 
     def _fit_annuli(self, image, annuli_list, rect_list):
+        """Fits annuli in grayscale image."""
         def find_hq_circle(circle, rect, inner):
             points = self._sample_ellipse(circle, rect)
             dx = 2 * circle[0] * points[:,0] + circle[1] * points[:,1] + circle[3]
@@ -374,6 +406,7 @@ class AnnulusDetection(object):
 
 
     def _sample_ellipse(self, ellipse, rect):
+        """Returns a list of 2D points corresponding to an ellipse equation."""
         points = []
 
         x = np.arange(rect[0], rect[0] + rect[2])
@@ -405,6 +438,7 @@ class AnnulusDetection(object):
     
 
     def _calculate_center(self, annuli_list):
+        """Calculate the centers for the annuli."""
         def calc_center(annulus):
             """Find cross ratio based on 4 points (line-ellipse intersection) and center: p1--p2--c--p3--p4.
                (p1 - p3) * (c - p4) / ((c - p3) * (p1 - p4)) == (p4 - p2) * (c - p1) / ((c - p2) * (p4 - p1))
@@ -463,9 +497,17 @@ class AnnulusDetection(object):
 
 
 class Grid(object):
-    """Find the numbering of the ellipse on a grid of annuli."""
-
+    """"Grid numbering."""
     def __init__(self, marker_spacing, outer_circle_diamater, **kwargs):
+        """Find the numbering of the ellipse on a grid of annuli.
+
+        Args:
+            marker_spacing:        Distance between two neighboring markers
+            outer_circle_diamater: Diameter of outer circle
+            cr_margin:             Relative tolerance of cross ratio between neighboring annuli
+            grid_margin:           Relative tolerance for grid projection
+            
+        """
         self.marker_spacing        = marker_spacing                 # Distance between two neighboring markers
         self.outer_circle_diameter = outer_circle_diamater          # Diameter of outer circle
         self.cr_margin             = kwargs.pop("cr_margin", 0.2)   # Relative tolerance for cross ratio
@@ -475,7 +517,17 @@ class Grid(object):
             raise ValueError("Unknown arguments: {0}".format(list(kwargs.keys())))
 
     def find_grid(self, ellipse):
-        """Find mapping from ellipse to grid positions. """
+        """Find mapping from ellipse to grid positions.
+        
+        Args:
+            ellipse: List of annuli (only the outer ellipse and the annulus center is ever used)
+
+        Returns:
+            H:     3x3 homography from pixel to grid coordinates
+            idx:   Indices of annuli used for homography
+            grid:  Grid coordinate of each used point
+            pixel: Pixel coordinate of each used point
+        """
         if len(ellipse) < 4:
             return None, None, None, None
 
@@ -492,6 +544,22 @@ class Grid(object):
 
 
     def find_numbered_grid(self, ellipse, binary_image, pattern = None):
+        """Find mapping from ellipse to grid positions.
+
+        First uses find_grid() to detect the numbering than find_numbering() to detect
+        the pattern and finnaly transforms the homography renumber the grid.
+        
+        Args:
+            ellipse:      List of annuli (only the outer ellipse and the annulus center is ever used)
+            binary_image: Binary image to find numbering
+            pattern:      Pattern to detect (see find_numbering())
+
+        Returns:
+            H:     3x3 homography from pixel to grid coordinates
+            idx:   Indices of annuli used for homography
+            grid:  Grid coordinate of each used point
+            pixel: Pixel coordinate of each used point
+        """
         H, idx, grid, pixel = self.find_grid(ellipse)
         if H is None:
             return None, None, None, None
@@ -506,6 +574,7 @@ class Grid(object):
 
 
     def _get_initial_homography(self, ellipse):
+        """Returns an initial estimate of the homography"""
         candidates = self._get_homography_candidates(ellipse)
 
         for c in candidates:
@@ -517,6 +586,7 @@ class Grid(object):
 
 
     def _get_homography_candidates(self, ellipse):
+        """"Returns a list of potential homography candidates."""
         # The points for the cross ratio are choosen so that
         #cr_grid = 1 - (d/m)**2
         cr_grid = _cross_ratio(0, self.outer_circle_diameter, self.marker_spacing + self.outer_circle_diameter, self.marker_spacing)
@@ -539,8 +609,7 @@ class Grid(object):
 
 
     def _get_homography_from_candidate(self, ellipse, candidate):
-        #Find a homography from a point that has four neighbors,
-        ##i.e. left, right, top and bottom.
+        """Find a homography from a point that has four neighbors, i.e. left, right, top and bottom."""
 
         cr_grid = _cross_ratio(0, self.outer_circle_diameter, 2 * self.marker_spacing + self.outer_circle_diameter, 2 * self.marker_spacing)
 
@@ -580,7 +649,7 @@ class Grid(object):
         return None
 
     def _refine_homography(self, points, Hest, iter = 2):
-        # Refine up to iter times to account for as many markers as possible.
+        #Refine up to iter times to account for as many markers as possible.
         # This is due to the  initial homography only being estimated from 5 points
 
         H = Hest
@@ -614,18 +683,24 @@ class Grid(object):
 def find_numbering(binary_image, H, grid, pattern = None):
     """Finds the given pattern around an annulus in the binary_image.
     
-       The default pattern is:
+    The default pattern list is:
 
-       *   _   _       0   1   2
+    *   _   _       0   1   2
 
-       _   x   _       3   4   5
+    _   x   _       3   4   5
 
-       *   *   *       6   7   8
+    *   *   *       6   7   8
 
-       x = center of ellipse
-       _ = blank
-       * = filled
-       
+    x = center of ellipse
+    _ = blank
+    * = filled
+    
+    Args:
+        H:       Homography from pixel to points
+        grid:    Grid numbering
+        pattern: Pattern to detect
+
+    Returns:
        Returns a transformation for the points in grid.
     """
     
@@ -678,6 +753,17 @@ def find_numbering(binary_image, H, grid, pattern = None):
         return None
 
 def transformed_homography(M, pixel, grid):
+    """Returns a homography where each grid point is previously transformed by M.
+
+    Args:
+        M:     Homography to apply
+        pixel: Pixel coordinates of points
+        grid:  Grid coordinates of points to transform by M
+
+    Returns:
+        H:    Homography transformed by M
+        grid: New numbering of grid
+    """
     grid = map_points(M, grid)
     H, _ = cv2.findHomography(pixel, grid)
     return H, grid

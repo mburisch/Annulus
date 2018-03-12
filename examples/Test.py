@@ -54,21 +54,6 @@ def map_point(H, x):
     y = np.dot(H, np.hstack((x, 1)))
     return y[0:2] / y[2]
 
-def threshold_image(image, block_size = (64, 64), step_size = (32, 32)):
-    binary = np.zeros_like(image)
-    for row in range(0, image.shape[0], step_size[0]):
-        for col in range(0, image.shape[1], step_size[1]):
-            im = image[row:row + block_size[0], col:col + block_size[1]]
-            if np.ptp(im) < 32:
-                if np.min(im) > 64:
-                    binary[row:row + block_size[0], col:col + block_size[1]] = 255
-            else:
-                _, bin = cv2.threshold(im, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-                binary[row:row + block_size[0], col:col + block_size[1]] = bin
-    return binary
-
-
-
 
 def process(image):
     image = image.copy()

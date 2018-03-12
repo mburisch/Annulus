@@ -1,1 +1,2 @@
-from AnnulusDetector import *
+from detector import *
+from image import *
