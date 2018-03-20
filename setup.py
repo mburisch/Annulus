@@ -1,12 +1,8 @@
 
-from setuptools import setup, find_packages
-import os.path
+from setuptools import setup
 
-here = os.path.abspath(os.path.dirname(__file__))
-
-with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
-
+long_description = "Detection of annuli (donuts) in images for camera calibration."
+	
 setup(
     name = 'annulus',
     version = '1.0.0',
@@ -26,5 +22,7 @@ setup(
     ],
     
     #packages = find_packages(where = "annulus"),
-    packages = find_packages(include = ["annulus"]),
+    #packages = find_packages(include = ["annulus"]),
+	packages = ["annulus"],
+	python_requires='>=3',
 )
