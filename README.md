@@ -62,8 +62,7 @@ H, idx, grid, pixel = grid.find_numbered_grid(annuli, binary)
 - outer_ellipse and inner_ellipse are rotated rectangles from OpenCV fitEllipse:
   ((center_x, center_y), (width, height), angle)
 
-- outer_ellipse_homogeneous and inner_ellipse_homogeneous
-  are the 6 parameter of a homogeneous ellipse equation:
+- outer_ellipse_homogeneous and inner_ellipse_homogeneous are the 6 parameter of an ellipse equation:
   A*x^2 + B*x*y + C*y^2 + D*x + E*y + F = 0
 
 - H:     3x3 homography from pixel to grid coordinates
