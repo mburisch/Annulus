@@ -16,9 +16,11 @@ The grid can optionally contain numbering references.
 ```
 # Create detector
 import annulus
+import cv2
 
 # Grayscale input image
-gray = ...
+image = cv2.imread("image.png")
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 # Binary version of the image (can also provide own version)
 binary = annulus.binarize(gray, block_size = 65)
