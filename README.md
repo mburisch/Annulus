@@ -72,4 +72,4 @@ H, idx, grid, pixel = grid.find_numbered_grid(annuli, binary)
 ```
 ## Result
 
-![Result of detection](https://github.com/Michael-4/Annulus/blob/master/data/result.png)
+![Result of detection](https://github.com/mgb4/Annulus/blob/master/data/result.png)
