@@ -6,7 +6,8 @@ python:
   - '3.6'
 
 install:
-  - pip install -r requirements.txt
+  - pip install numpy
+  - pip install opencv-python
 
 script:
   - PYTHONPATH=$PWD:$PYTHONPATH pytest tests
