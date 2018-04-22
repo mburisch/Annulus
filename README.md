@@ -6,13 +6,25 @@ The detection is performed in two steps:
 - Detection of annuli in the image
 - Recovery of the grid
 
-The grid of annuli does not have to be fully visible, i.e. it is fine to capture only a part of the grid, which helps in calibrating the border and corners of the camera.
-
-The grid can optionally contain numbering references.
+The grid of annuli does not have to be fully visible, i.e. it is fine to capture only a part of the grid,
+which helps in calibrating the border and corners of the camera. Optionally the grid can contain numbering
+references.
 
 
 ## Example
 
+A basic example
+```
+image = cv2.imread("image.png")
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+binary = annulus.binarize(gray, block_size = 65)
+
+detector = annulus.AnnulusDetection()
+annuli = detector.detect(gray, binary, high_quality = True)
+H, idx, grid, pixel = grid.find_numbered_grid(annuli, binary)
+```
+
+A more complex example
 ```
 # Create detector
 import annulus
