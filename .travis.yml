@@ -5,22 +5,15 @@ python:
   - "3.5"
   - "3.6"
 
-#install:
-#  - pip install numpy
-#  - pip install opencv-python
+install:
+  - pip install numpy
+  - pip install opencv-python
 
-#script:
-#  #- PYTHONPATH=$PWD:$PYTHONPATH pytest tests
-#  - python -m pytest tests
+script:
+  - python -m pytest tests
+  
 jobs:  
   include:
-    - stage: test
-      install:
-        - pip install numpy
-        - pip install opencv-python
-      script:
-        - python -m pytest tests
-
     - stage: deploy
       python: "3.6"
       script: skip
