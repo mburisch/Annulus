@@ -25,6 +25,7 @@ binary = annulus.binarize(gray, block_size = 65)
 
 detector = annulus.AnnulusDetection()
 annuli = detector.detect(gray, binary, high_quality = True)
+grid = annulus.Grid(outer_circle_diamater = 0.02, marker_spacing = 0.03)
 H, idx, grid, pixel = grid.find_numbered_grid(annuli, binary)
 ```
 
