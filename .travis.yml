@@ -10,13 +10,20 @@ install:
   - pip install opencv-python
 
 script:
-  - PYTHONPATH=$PWD:$PYTHONPATH pytest tests
+  #- PYTHONPATH=$PWD:$PYTHONPATH pytest tests
+  - python -m pytest tests
   
-deploy:
-  provider: pypi
-  user: mgb
-  password:
-    secure: EEdLkqwVGPXWsB59VyN21RV2iGI+Q5s2b51yVP0k1tn6HXDmA0hLfaxPdXc9UfZeMrdT5JI1rck1F/Xj5fqJQIagj6hucCk9Ex7b1se7/gWkyI7qugpk0OWf31YasWvZG7x66i42CeNIivEobBZYJhdtk+A3X+QjBBI+ioj95rqDkzA4cz9aH9XNPKEQLcSWAsRyX1O4MOxO+mnz0eGNx3lDfigMpWF6/P1EEXq6V5/YqvCMd0PCu8tnPO0P2CCUqOGfSrw02oS3+z5jax2ObcqQCT2gGEvUx90Qyniw7eNSOJZ0GztgBlssBNVdqn/mt+5sUO+kmJgUNrcoQZYAWeJ5DOgxNlUTPjf9Qh4YJj+eN63DlbZcJVvbRHTeGcILtmZ1w0i/1zNoXeVPAVWk1xB/BAszrlNKEb4UdIq5MYqqYR1rAn9Kat/TdMxllLFArHtlYfMKfP1roU/iKVZwrSj+h4tmOmXMIbvhQL2bMe4a0wshE+vPBAGuQVVxmC9r/VteTMgEPx76uxZT4MMrQ1XamHIjcEdzBN/GeHsrQbs52lUXoi15eJYpAAlVPz36j67KKyMSAy1JhH4lCBdQksf5R9J8GNnkQvMlF4NtT8UgsQ4pUGKOpxAZ7F9ejG4gaEmWNmag9FPWoYdPRmysQ63yC/DCFGkVsoyamRygt0Q=
-  distributions: "sdist bdist_wheel"
-  on:
-    tags: true
+include:
+  - stage: deploy
+    python: 3.6
+    install: skip
+    script: skip
+    deploy:
+      provider: pypi
+      user: mgb
+      password:
+        secure: EEdLkqwVGPXWsB59VyN21RV2iGI+Q5s2b51yVP0k1tn6HXDmA0hLfaxPdXc9UfZeMrdT5JI1rck1F/Xj5fqJQIagj6hucCk9Ex7b1se7/gWkyI7qugpk0OWf31YasWvZG7x66i42CeNIivEobBZYJhdtk+A3X+QjBBI+ioj95rqDkzA4cz9aH9XNPKEQLcSWAsRyX1O4MOxO+mnz0eGNx3lDfigMpWF6/P1EEXq6V5/YqvCMd0PCu8tnPO0P2CCUqOGfSrw02oS3+z5jax2ObcqQCT2gGEvUx90Qyniw7eNSOJZ0GztgBlssBNVdqn/mt+5sUO+kmJgUNrcoQZYAWeJ5DOgxNlUTPjf9Qh4YJj+eN63DlbZcJVvbRHTeGcILtmZ1w0i/1zNoXeVPAVWk1xB/BAszrlNKEb4UdIq5MYqqYR1rAn9Kat/TdMxllLFArHtlYfMKfP1roU/iKVZwrSj+h4tmOmXMIbvhQL2bMe4a0wshE+vPBAGuQVVxmC9r/VteTMgEPx76uxZT4MMrQ1XamHIjcEdzBN/GeHsrQbs52lUXoi15eJYpAAlVPz36j67KKyMSAy1JhH4lCBdQksf5R9J8GNnkQvMlF4NtT8UgsQ4pUGKOpxAZ7F9ejG4gaEmWNmag9FPWoYdPRmysQ63yC/DCFGkVsoyamRygt0Q=
+      distributions: "sdist bdist_wheel"
+    on:
+      tags: true
+  
