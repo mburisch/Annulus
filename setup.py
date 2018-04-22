@@ -7,7 +7,7 @@ Detection of annuli (donuts) in images and recovery of a grid for camera calibra
 	
 setup(
     name = 'annulus',
-    version = '1.0.2',
+    version = '1.0.3',
     description = "Annulus (donut) detection in images for camera calibration",
     long_description = long_description, 
 
