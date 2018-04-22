@@ -10,6 +10,10 @@ The grid of annuli does not have to be fully visible, i.e. it is fine to capture
 which helps in calibrating the border and corners of the camera. Optionally the grid can contain numbering
 references.
 
+## Install
+```
+pip install annulus
+```
 
 ## Example
 
@@ -85,3 +89,4 @@ H, idx, grid, pixel = grid.find_numbered_grid(annuli, binary)
 ## Result
 
 ![Result of detection](https://github.com/mgb4/Annulus/blob/master/doc/result.png)
+
