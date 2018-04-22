@@ -1,6 +1,6 @@
 
 import cv2
-
+import numpy as np
 
 def binarize(image, block_size = 33):
     """Binarizes an image using OpenCV adaptive threshold.

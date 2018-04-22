@@ -563,11 +563,11 @@ class Grid(object):
         H, idx, grid, pixel = self.find_grid(ellipse)
         if H is None:
             return None, None, None, None
-
-        M = find_numbering(binary_image, H, pixel, pattern)
+        
+        M = find_numbering(binary_image, H, grid, pattern)
         if M is None:
             return None, None, None, None
-
+        
         H, grid = transformed_homography(M, pixel, grid)
         
         return H, idx, grid, pixel

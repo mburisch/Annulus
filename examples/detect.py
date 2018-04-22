@@ -120,7 +120,8 @@ def video():
         cv2.imshow("Image", image);
 
 
-image_file = os.path.dirname(__file__) + "/../data/image.png"
+image_file = os.path.abspath(os.path.dirname(__file__)) + "/image.png"
+print(image_file)
 
 single(image_file)
 #video()

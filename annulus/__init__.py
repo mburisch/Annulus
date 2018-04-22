@@ -1,2 +1,3 @@
-from detector import *
-from image import *
+
+from .detector import *
+from .image import *
