@@ -1,7 +1,5 @@
 # Annulus
 
-Annulus grid (donuts) detection in images
-
 This library detects annuli (donuts) and their center in images which can be used for camera calibration.
 
 The detection is performed in two steps:
